@@ -1063,6 +1063,31 @@ public class Bridge extends PrecompiledContracts.PrecompiledContract {
         return bridgeSupport.increaseLockingCap(rskTx, newLockingCap);
     }
 
+    public void registerBtcCoinbaseTransaction(Object[] args)
+    {
+        logger.trace("registerBtcCoinbaseTransaction");
+
+        byte[] btcTxSerialized = (byte[]) args[0];
+        int height = ((BigInteger)args[1]).intValue();
+
+        byte[] pmtSerialized = (byte[]) args[2];
+        try {
+            bridgeSupport.registerBtcCoinbaseTransaction(btcTxSerialized, height, pmtSerialized);
+        } catch (IOException | BlockStoreException e) {
+            logger.warn("Exception in registerBtcCoinbaseTransaction", e);
+            throw new RuntimeException("Exception in registerBtcCoinbaseTransaction", e);
+        }
+    }
+
+    public Boolean hasBtcBlockCoinbaseTransactionInformation(Object[] args)
+    {
+        logger.trace("hasBtcBlockCoinbaseTransactionInformation");
+
+        int height = ((BigInteger)args[0]).intValue();
+
+        return bridgeSupport.hasBtcBlockCoinbaseTransactionInformation(height);
+    }
+
     public static BridgeMethods.BridgeMethodExecutor activeAndRetiringFederationOnly(BridgeMethods.BridgeMethodExecutor decoratee, String funcName) {
         return (self, args) -> {
             Federation retiringFederation = self.bridgeSupport.getRetiringFederation();

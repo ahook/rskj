@@ -1948,6 +1948,83 @@ public class BridgeSupport {
         return true;
     }
 
+    public void registerBtcCoinbaseTransaction(byte[] btcTxSerialized, int height, byte[] pmtSerialized) throws IOException, BlockStoreException {
+        Context.propagate(btcContext);
+
+        // TODO: Ask if the block already has witness root, then return.
+
+        Sha256Hash btcTxHash = BtcTransactionFormatUtils.calculateBtcTxHash(btcTxSerialized);
+
+        if (height < 0) {
+            String panicMessage = String.format("Btc Tx %s Supplied Height is %d but should be greater than 0", btcTxHash, height);
+            logger.warn(panicMessage);
+            panicProcessor.panic("btclock", panicMessage);
+            return;
+        }
+/*
+        // Check there are at least N blocks on top of the supplied height
+        int btcBestChainHeight = getBtcBlockchainBestChainHeight();
+        int confirmations = btcBestChainHeight - height + 1;
+        if (confirmations < bridgeConstants.getBtc2RskMinimumAcceptableConfirmations()) {
+            logger.warn(
+                    "Btc Tx {} at least {} confirmations are required, but there are only {} confirmations",
+                    btcTxHash,
+                    bridgeConstants.getBtc2RskMinimumAcceptableConfirmations(),
+                    confirmations
+            );
+            return;
+        }
+*/
+        if (!PartialMerkleTreeFormatUtils.hasExpectedSize(pmtSerialized)) {
+            throw new BridgeIllegalArgumentException("PartialMerkleTree doesn't have expected size");
+        }
+
+        Sha256Hash merkleRoot;
+        try {
+            PartialMerkleTree pmt = new PartialMerkleTree(bridgeConstants.getBtcParams(), pmtSerialized, 0);
+            List<Sha256Hash> hashesInPmt = new ArrayList<>();
+            merkleRoot = pmt.getTxnHashAndMerkleRoot(hashesInPmt);
+            if (!hashesInPmt.contains(btcTxHash)) {
+                logger.warn("Supplied Btc Tx {} is not in the supplied partial merkle tree", btcTxHash);
+                return;
+            }
+        } catch (VerificationException e) {
+            throw new BridgeIllegalArgumentException(String.format("PartialMerkleTree could not be parsed {}", Hex.toHexString(pmtSerialized)), e);
+        }
+
+        // Check the the merkle root equals merkle root of btc block at specified height in the btc best chain
+        // BTC blockstore is available since we've already queried the best chain height
+        StoredBlock storedBlock = btcBlockStore.getStoredBlockAtMainChainHeight(height);
+        // TODO: SI NO VAMOS A VERIFICAR LAS CONFIRMACIONES, PODRIAN MANDARNOS UNA ALTURA SUPERIOR AL HEAD Y ESO DA NPE
+        if (storedBlock == null) {
+            throw new BridgeIllegalArgumentException(String.format("No Block registered at height %n", height));
+        }
+        BtcBlock blockHeader = storedBlock.getHeader();
+        if (!blockHeader.getMerkleRoot().equals(merkleRoot)) {
+            String panicMessage = String.format(
+                    "Btc Tx %s Supplied merkle root %s does not match block's merkle root %s",
+                    btcTxHash.toString(),
+                    merkleRoot,
+                    blockHeader.getMerkleRoot()
+            );
+            logger.warn(panicMessage);
+            panicProcessor.panic("btclock", panicMessage);
+            return;
+        }
+
+        BtcTransaction btcTx = new BtcTransaction(bridgeConstants.getBtcParams(), btcTxSerialized);
+        btcTx.verify();
+
+        // TODO: Call to bitcoinj-thin to extract witness commitment using coinbase.
+    }
+
+    public boolean hasBtcBlockCoinbaseTransactionInformation(int height)
+    {
+        //TODO: Call bitcoinj-thin using height to know if in this height cointains witness commitment information.
+        return true; //Return a value indicated if the height of the block contains info.
+    }
+
+
     private StoredBlock getBtcBlockchainChainHead() throws IOException, BlockStoreException {
         // Gather the current btc chain's head
         // IMPORTANT: we assume that getting the chain head from the btc blockstore
