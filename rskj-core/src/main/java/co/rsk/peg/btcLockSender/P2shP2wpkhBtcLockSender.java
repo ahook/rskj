@@ -4,7 +4,6 @@ import co.rsk.bitcoinj.core.Address;
 import co.rsk.bitcoinj.core.BtcECKey;
 import co.rsk.bitcoinj.core.BtcTransaction;
 import co.rsk.bitcoinj.core.Sha256Hash;
-import co.rsk.bitcoinj.script.Script;
 import co.rsk.core.RskAddress;
 import org.ethereum.crypto.HashUtil;
 import org.ethereum.util.ByteUtil;

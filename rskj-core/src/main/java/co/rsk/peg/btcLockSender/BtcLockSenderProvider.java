@@ -25,3 +25,20 @@ public class BtcLockSenderProvider {
         return Optional.empty();
     }
 }
+
+
+//Crear tarea deuda técnica, cambiar el enfoque del BtLockSenderProvider para que no use excepciones y vaya probando con los distintos parsers
+    //BtcLockSender debería ser una clase concreta, tener varias intancias de un parser
+    /*
+
+    btcLockSender = parser1.tryParse(tx);
+    if (btcLockSender.isPresent()) {
+        return btcLockSender;
+    }
+    btcLockSender = parser2.tryParse(tx);
+    if (btcLockSender.isPresent()) {
+        return btcLockSender;
+    }
+
+     */
+//Crear tarea deuda técnica, agregar logs cuando no se puede parsear el BtcLockSender y poner la causa

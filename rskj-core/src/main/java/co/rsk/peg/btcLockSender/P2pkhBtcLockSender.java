@@ -10,7 +10,7 @@ public class P2pkhBtcLockSender extends BtcLockSender {
 
     public P2pkhBtcLockSender(BtcTransaction btcTx) throws BtcLockSenderParseException {
         super(btcTx);
-        this.setType(BtcLockSender.TxType.P2PKH);
+        this.transactionType = TxType.P2PKH;
     }
 
     @Override
@@ -42,11 +42,5 @@ public class P2pkhBtcLockSender extends BtcLockSender {
         //Looking for rskAddress
         org.ethereum.crypto.ECKey key = org.ethereum.crypto.ECKey.fromPublicOnly(data);
         this.rskAddress = new RskAddress(key.getAddress());
-
     }
-
-    private final void setType(BtcLockSender.TxType trtype) {
-        this.transactionType = trtype;
-    }
-
 }

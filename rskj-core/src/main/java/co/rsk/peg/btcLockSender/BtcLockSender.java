@@ -9,7 +9,8 @@ public abstract class BtcLockSender {
     public enum TxType {
            P2PKH,
            P2SHP2WPKH,
-           P2SHMULTISIG
+           P2SHMULTISIG,
+           P2SHP2WSKH
     }
 
     protected BtcLockSender.TxType transactionType;
